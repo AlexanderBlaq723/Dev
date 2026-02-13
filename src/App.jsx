@@ -317,6 +317,10 @@ const ValentineWishPage = () => {
   };
 
   const generateShareableLink = () => {
+    if (!wishData.message && !wishData.recipientName) {
+      alert('Please add a message and recipient name first!');
+      return;
+    }
     const id = Math.random().toString(36).substring(2, 15);
     localStorage.setItem(`valentine-wish-${id}`, JSON.stringify(wishData));
     const encoded = btoa(JSON.stringify(wishData));
@@ -328,10 +332,47 @@ const ValentineWishPage = () => {
 
   const downloadAsImage = async () => {
     const card = document.getElementById('valentine-card');
-    if (!card) return;
+    if (!card) {
+      alert('Please create a card first!');
+      return;
+    }
 
-    // Simple download simulation
-    alert('Card download feature coming soon! For now, you can screenshot the card.');
+    try {
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      canvas.width = card.offsetWidth * scale;
+      canvas.height = card.offsetHeight * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      const data = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${card.offsetWidth}" height="${card.offsetHeight}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+              ${card.outerHTML}
+            </div>
+          </foreignObject>
+        </svg>
+      `;
+
+      const img = new Image();
+      const blob = new Blob([data], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          const link = document.createElement('a');
+          link.download = 'valentine-card.png';
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          URL.revokeObjectURL(url);
+        });
+      };
+      img.src = url;
+    } catch (error) {
+      alert('Download failed. Please take a screenshot instead.');
+    }
   };
 
   const calculateCompatibility = () => {
