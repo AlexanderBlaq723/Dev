@@ -92,12 +92,10 @@ const ValentineWishPage = () => {
   // Photo slideshow
   useEffect(() => {
     const photos = wishData.photos.length > 0 ? wishData.photos : defaultBackgroundImages.map(url => ({ url }));
-    if (photos.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentPhotoIndex(prev => (prev + 1) % photos.length);
-      }, 3000);
-      return () => clearInterval(interval);
-    }
+    const interval = setInterval(() => {
+      setCurrentPhotoIndex(prev => (prev + 1) % photos.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [wishData.photos.length]);
 
   const backgroundOptions = {
