@@ -58,8 +58,18 @@ const ValentineWishPage = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('wish');
+    const data = urlParams.get('data');
 
-    if (id) {
+    if (data) {
+      try {
+        const decoded = JSON.parse(atob(data));
+        setWishData(decoded);
+        setShareableId(id || 'shared');
+        setActiveTab('view');
+      } catch (e) {
+        console.error('Failed to load wish data');
+      }
+    } else if (id) {
       const saved = localStorage.getItem(`valentine-wish-${id}`);
       if (saved) {
         setWishData(JSON.parse(saved));
@@ -309,8 +319,9 @@ const ValentineWishPage = () => {
   const generateShareableLink = () => {
     const id = Math.random().toString(36).substring(2, 15);
     localStorage.setItem(`valentine-wish-${id}`, JSON.stringify(wishData));
+    const encoded = btoa(JSON.stringify(wishData));
     setShareableId(id);
-    const url = `${window.location.origin}${window.location.pathname}?wish=${id}`;
+    const url = `${window.location.origin}${window.location.pathname}?wish=${id}&data=${encoded}`;
     navigator.clipboard.writeText(url);
     return url;
   };
