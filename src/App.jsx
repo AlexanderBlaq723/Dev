@@ -503,7 +503,7 @@ const ValentineWishPage = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: wishData.photos.length > 0 ? 'transparent' : backgroundOptions[wishData.backgroundColor],
+      background: 'transparent',
       fontFamily: fontStyles[wishData.fontStyle],
       color: '#ffffff',
       position: 'relative',
