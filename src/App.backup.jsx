@@ -317,6 +317,10 @@ const ValentineWishPage = () => {
   };
 
   const generateShareableLink = () => {
+    if (!wishData.message && !wishData.recipientName) {
+      alert('Please add a message and recipient name first!');
+      return;
+    }
     const id = Math.random().toString(36).substring(2, 15);
     localStorage.setItem(`valentine-wish-${id}`, JSON.stringify(wishData));
     const encoded = btoa(JSON.stringify(wishData));
@@ -327,7 +331,48 @@ const ValentineWishPage = () => {
   };
 
   const downloadAsImage = async () => {
-    alert('To save your card: Take a screenshot of the card preview on your device!\n\nWindows: Press Windows + Shift + S\nMac: Press Cmd + Shift + 4\nMobile: Use your device\'s screenshot feature');
+    const card = document.getElementById('valentine-card');
+    if (!card) {
+      alert('Please create a card first!');
+      return;
+    }
+
+    try {
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      canvas.width = card.offsetWidth * scale;
+      canvas.height = card.offsetHeight * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      const data = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${card.offsetWidth}" height="${card.offsetHeight}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+              ${card.outerHTML}
+            </div>
+          </foreignObject>
+        </svg>
+      `;
+
+      const img = new Image();
+      const blob = new Blob([data], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          const link = document.createElement('a');
+          link.download = 'valentine-card.png';
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          URL.revokeObjectURL(url);
+        });
+      };
+      img.src = url;
+    } catch (error) {
+      alert('Download failed. Please take a screenshot instead.');
+    }
   };
 
   const calculateCompatibility = () => {
@@ -1320,7 +1365,10 @@ const ValentineWishPage = () => {
                     marginBottom: '2rem',
                     fontWeight: '600',
                     fontFamily: fontStyles[wishData.fontStyle],
-                    color: '#FF6B9D'
+                    background: backgroundOptions[wishData.backgroundColor],
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
                   }}>
                     To {wishData.recipientName},
                   </div>
@@ -1343,7 +1391,10 @@ const ValentineWishPage = () => {
                     fontSize: '2rem',
                     fontWeight: '600',
                     fontFamily: fontStyles[wishData.fontStyle],
-                    color: '#FF6B9D'
+                    background: backgroundOptions[wishData.backgroundColor],
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
                   }}>
                     With all my love,<br />
                     {wishData.senderName} ❤️
@@ -1611,36 +1662,10 @@ const ValentineWishPage = () => {
               </div>
             )}
 
-            {/* Skip/Next Buttons */}
-            <div style={{ textAlign: 'center', marginTop: '3rem', display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {/* Next Button */}
+            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
               <button
-                onClick={() => setActiveTab('video')}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)',
-                  color: '#ffffff',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  padding: '1.25rem 3rem',
-                  fontSize: '1.1rem',
-                  borderRadius: '50px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontFamily: "'Poppins', sans-serif",
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.3)';
-                  e.target.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              >
-                Skip Photos
-              </button>
-              <button
-                onClick={() => setActiveTab('video')}
+                onClick={() => setActiveTab('share')}
                 style={{
                   background: 'rgba(255, 255, 255, 0.95)',
                   color: '#6c5ce7',
@@ -1663,7 +1688,7 @@ const ValentineWishPage = () => {
                   e.target.style.boxShadow = '0 15px 50px rgba(0, 0, 0, 0.3)';
                 }}
               >
-                Next: Video Message →
+                Next: Share Your Card →
               </button>
             </div>
           </div>
@@ -1809,62 +1834,6 @@ const ValentineWishPage = () => {
                   </button>
                 </div>
               )}
-            </div>
-
-            {/* Skip/Next Buttons */}
-            <div style={{ textAlign: 'center', marginTop: '3rem', display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setActiveTab('music')}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)',
-                  color: '#ffffff',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  padding: '1.25rem 3rem',
-                  fontSize: '1.1rem',
-                  borderRadius: '50px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontFamily: "'Poppins', sans-serif",
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.3)';
-                  e.target.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              >
-                Skip Video
-              </button>
-              <button
-                onClick={() => setActiveTab('music')}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  color: '#6c5ce7',
-                  border: 'none',
-                  padding: '1.5rem 4rem',
-                  fontSize: '1.3rem',
-                  borderRadius: '60px',
-                  cursor: 'pointer',
-                  fontWeight: '700',
-                  fontFamily: "'Poppins', sans-serif",
-                  boxShadow: '0 15px 50px rgba(0, 0, 0, 0.3)',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-5px) scale(1.05)';
-                  e.target.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                  e.target.style.boxShadow = '0 15px 50px rgba(0, 0, 0, 0.3)';
-                }}
-              >
-                Next: Add Music →
-              </button>
             </div>
           </div>
         )}
@@ -2405,7 +2374,7 @@ const ValentineWishPage = () => {
                   letterSpacing: '1px',
                   textTransform: 'uppercase'
                 }}>
-                  📅 Schedule for Valentine's Day (Optional)
+                  📅 Schedule for Valentine's Day
                 </label>
                 <input
                   type="date"

@@ -1,0 +1,40 @@
+CRITICAL FIXES NEEDED IN App.jsx:
+
+1. Line ~370 - Remove validation from generateShareableLink:
+   DELETE these lines:
+   if (!wishData.message && !wishData.recipientName) {
+     alert('Please add a message and recipient name first!');
+     return;
+   }
+
+2. Line ~380 - Simplify downloadAsImage function:
+   REPLACE entire function with:
+   const downloadAsImage = async () => {
+     alert('Right-click on the card and select "Save image as" or take a screenshot.');
+   };
+
+3. Line ~1950 (in card preview) - Fix recipient name color:
+   CHANGE:
+   background: backgroundOptions[wishData.backgroundColor],
+   WebkitBackgroundClip: 'text',
+   WebkitTextFillColor: 'transparent',
+   backgroundClip: 'text'
+   TO:
+   color: '#FF6B9D'
+
+4. Line ~2000 (in card preview) - Fix sender name color:
+   CHANGE:
+   background: backgroundOptions[wishData.backgroundColor],
+   WebkitBackgroundClip: 'text',
+   WebkitTextFillColor: 'transparent',
+   backgroundClip: 'text'
+   TO:
+   color: '#FF6B9D'
+
+5. Line ~2826 (in share tab) - Remove date minimum:
+   DELETE: min="2026-02-14"
+
+6. Add Skip/Next buttons after photos section (line ~2250)
+7. Same for video, music, timeline, gifts tabs
+
+RESTART your dev server after making these changes!

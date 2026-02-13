@@ -1,0 +1,33 @@
+REMAINING FIXES NEEDED FOR APP.JSX
+=====================================
+
+The following fixes still need to be applied manually:
+
+1. ADD SKIP/NEXT BUTTONS TO MUSIC TAB (after line with getCurrentMusicUrl() section ends)
+   - Add Skip/Next buttons before closing </div> of music tab
+   - Skip button goes to 'timeline' tab
+   - Next button goes to 'timeline' tab
+
+2. ADD SKIP/NEXT BUTTONS TO TIMELINE TAB (after timeline items display section)
+   - Add Skip/Next buttons before closing </div> of timeline tab
+   - Skip button goes to 'gifts' tab
+   - Next button goes to 'gifts' tab
+
+3. ADD SKIP/NEXT BUTTONS TO GIFTS TAB (after selected gifts display section)
+   - Add Skip/Next buttons before closing </div> of gifts tab
+   - Skip button goes to 'share' tab
+   - Next button goes to 'share' tab
+
+4. FIX VIEW MODE NAMES (in view tab around line with valentine-card id)
+   - Change recipient name from gradient text to solid color #FF6B9D
+   - Change sender name from gradient text to solid color #FF6B9D
+   - Remove WebkitBackgroundClip, WebkitTextFillColor, backgroundClip properties
+   - Add color: '#FF6B9D' property instead
+
+COMPLETED FIXES:
+✅ Removed validation from generateShareableLink
+✅ Simplified downloadAsImage to screenshot instruction
+✅ Fixed recipient/sender names in card preview (card tab)
+✅ Removed date min requirement (made optional)
+✅ Added Skip/Next buttons to photos tab
+✅ Added Skip/Next buttons to video tab
