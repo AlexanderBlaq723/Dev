@@ -31,6 +31,7 @@ const ValentineWishPage = () => {
   const [activeTimelineItem, setActiveTimelineItem] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
@@ -60,7 +61,7 @@ const ValentineWishPage = () => {
     const id = urlParams.get('wish');
 
     if (id) {
-      fetch(`http://localhost:3001/api/wishes/${id}`)
+      fetch(`/api/wishes?id=${id}`)
         .then(res => res.json())
         .then(result => {
           if (result.success) {
@@ -81,6 +82,16 @@ const ValentineWishPage = () => {
       setIsPlaying(false);
     }
   }, [wishData.musicChoice, wishData.customMusicUrl, volume]);
+
+  // Photo slideshow
+  useEffect(() => {
+    if (wishData.photos.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentPhotoIndex(prev => (prev + 1) % wishData.photos.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [wishData.photos.length]);
 
   const backgroundOptions = {
     gradient1: 'linear-gradient(135deg, #FF6B9D 0%, #C44569 50%, #FFA8A8 100%)',
@@ -313,24 +324,99 @@ const ValentineWishPage = () => {
   const generateShareableLink = async () => {
     try {
       const id = Math.random().toString(36).substring(2, 15);
-      const response = await fetch('http://localhost:3001/api/wishes', {
+      
+      const response = await fetch('/api/wishes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, data: wishData })
       });
+      
       if (!response.ok) throw new Error('Failed to save');
       setShareableId(id);
       const url = `${window.location.origin}${window.location.pathname}?wish=${id}`;
       navigator.clipboard.writeText(url);
       return url;
     } catch (error) {
-      alert('Failed to generate link. Make sure server is running: npm run server');
+      alert('Failed to generate link. Please check your internet connection.');
       console.error(error);
     }
   };
 
-  const downloadAsImage = async () => {
-    alert('To save your card: Take a screenshot of the card preview on your device!\n\nWindows: Press Windows + Shift + S\nMac: Press Cmd + Shift + 4\nMobile: Use your device\'s screenshot feature');
+  const downloadAsImage = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 1600;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#FF6B9D';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Card background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.roundRect(100, 100, 1000, 1400, 30);
+    ctx.fill();
+
+    // Heart emoji
+    ctx.font = '120px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('💝', 600, 300);
+
+    // Recipient name
+    if (wishData.recipientName) {
+      ctx.fillStyle = '#FF6B9D';
+      ctx.font = 'bold 60px serif';
+      ctx.fillText(`To ${wishData.recipientName},`, 600, 450);
+    }
+
+    // Message
+    if (wishData.message) {
+      ctx.fillStyle = '#444';
+      ctx.font = 'italic 32px serif';
+      const words = wishData.message.split(' ');
+      let line = '';
+      let y = 600;
+      
+      words.forEach(word => {
+        const testLine = line + word + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > 800 && line !== '') {
+          ctx.fillText(line, 600, y);
+          line = word + ' ';
+          y += 50;
+        } else {
+          line = testLine;
+        }
+      });
+      ctx.fillText(line, 600, y);
+    }
+
+    // Sender name
+    if (wishData.senderName) {
+      ctx.fillStyle = '#FF6B9D';
+      ctx.font = 'bold 48px serif';
+      ctx.fillText('With all my love,', 600, 1300);
+      ctx.fillText(`${wishData.senderName} ❤️`, 600, 1380);
+    }
+
+    // Stickers
+    wishData.stickers.forEach(sticker => {
+      ctx.font = `${sticker.size}px Arial`;
+      ctx.save();
+      ctx.translate(100 + (sticker.x / 100) * 1000, 100 + (sticker.y / 100) * 1400);
+      ctx.rotate((sticker.rotation * Math.PI) / 180);
+      ctx.fillText(sticker.emoji, 0, 0);
+      ctx.restore();
+    });
+
+    // Download
+    canvas.toBlob((blob) => {
+      const link = document.createElement('a');
+      link.download = 'valentine-card.png';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    });
   };
 
   const calculateCompatibility = () => {
@@ -417,6 +503,36 @@ const ValentineWishPage = () => {
       overflow: 'hidden',
       transition: 'background 0.5s ease'
     }}>
+      {/* Photo slideshow background */}
+      {wishData.photos.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          top: 0,
+          left: 0,
+          overflow: 'hidden',
+          zIndex: 0
+        }}>
+          {wishData.photos.map((photo, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                backgroundImage: `url(${photo.url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'blur(8px) brightness(0.4)',
+                opacity: i === currentPhotoIndex ? 1 : 0,
+                transition: 'opacity 1s ease-in-out'
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Animated floating hearts background */}
       <div style={{
         position: 'fixed',
