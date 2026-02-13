@@ -36,6 +36,12 @@ const ValentineWishPage = () => {
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
 
+  const defaultBackgroundImages = [
+    '/becca-tapert-8qxdUJf346A-unsplash.jpg',
+    '/priscilla-du-preez-xSAiIM6Wa2c-unsplash.jpg',
+    '/sidney-pearce-yPMJliKzyc4-unsplash.jpg'
+  ];
+
   // Countdown timer
   useEffect(() => {
     const valentinesDay = new Date('2026-02-14T00:00:00');
@@ -85,9 +91,10 @@ const ValentineWishPage = () => {
 
   // Photo slideshow
   useEffect(() => {
-    if (wishData.photos.length > 1) {
+    const photos = wishData.photos.length > 0 ? wishData.photos : defaultBackgroundImages.map(url => ({ url }));
+    if (photos.length > 1) {
       const interval = setInterval(() => {
-        setCurrentPhotoIndex(prev => (prev + 1) % wishData.photos.length);
+        setCurrentPhotoIndex(prev => (prev + 1) % photos.length);
       }, 3000);
       return () => clearInterval(interval);
     }
@@ -496,7 +503,7 @@ const ValentineWishPage = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: backgroundOptions[wishData.backgroundColor],
+      background: wishData.photos.length > 0 ? 'transparent' : backgroundOptions[wishData.backgroundColor],
       fontFamily: fontStyles[wishData.fontStyle],
       color: '#ffffff',
       position: 'relative',
@@ -504,34 +511,32 @@ const ValentineWishPage = () => {
       transition: 'background 0.5s ease'
     }}>
       {/* Photo slideshow background */}
-      {wishData.photos.length > 0 && (
-        <div style={{
-          position: 'fixed',
-          width: '100%',
-          height: '100%',
-          top: 0,
-          left: 0,
-          overflow: 'hidden',
-          zIndex: 0
-        }}>
-          {wishData.photos.map((photo, i) => (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                backgroundImage: `url(${photo.url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'blur(8px) brightness(0.4)',
-                opacity: i === currentPhotoIndex ? 1 : 0,
-                transition: 'opacity 1s ease-in-out'
-              }}
-            />
-          ))}
-        </div>
-      )}
+      <div style={{
+        position: 'fixed',
+        width: '100%',
+        height: '100%',
+        top: 0,
+        left: 0,
+        overflow: 'hidden',
+        zIndex: 1
+      }}>
+        {(wishData.photos.length > 0 ? wishData.photos : defaultBackgroundImages.map(url => ({ url }))).map((photo, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              backgroundImage: `url(${photo.url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(8px) brightness(0.4)',
+              opacity: i === currentPhotoIndex ? 1 : 0,
+              transition: 'opacity 1s ease-in-out'
+            }}
+          />
+        ))}
+      </div>
 
       {/* Animated floating hearts background */}
       <div style={{
@@ -542,7 +547,7 @@ const ValentineWishPage = () => {
         left: 0,
         pointerEvents: 'none',
         overflow: 'hidden',
-        zIndex: 0
+        zIndex: 2
       }}>
         {[...Array(15)].map((_, i) => (
           <div
@@ -562,7 +567,7 @@ const ValentineWishPage = () => {
       </div>
 
       {/* Main Content */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ position: 'relative', zIndex: 10 }}>
         {/* Enhanced Navigation */}
         {activeTab !== 'view' && (
           <nav style={{
