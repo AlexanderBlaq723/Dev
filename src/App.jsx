@@ -209,18 +209,48 @@ const ValentineWishPage = () => {
     }
   ];
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
+
+    for (const file of files) {
+      try {
+        // Get signed URL for upload
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: `${Date.now()}-${file.name}`,
+            fileType: file.type
+          })
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+
+        const { signedUrl, path } = await response.json();
+
+        // Upload to Supabase Storage
+        const uploadResponse = await fetch(signedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+
+        if (!uploadResponse.ok) throw new Error('Storage upload failed');
+
+        // Construct public URL (adjust based on your Supabase bucket settings)
+        // For signed URLs, we might need a different approach or make the bucket public
+        // Assuming public bucket 'uploads' for simplicity in this demo
+        const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/${path}`;
+
         setWishData(prev => ({
           ...prev,
-          photos: [...prev.photos, { url: event.target.result, caption: '', filter: 'none' }]
+          photos: [...prev.photos, { url: publicUrl, caption: '', filter: 'none' }]
         }));
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (error) {
+        console.error('Photo upload error:', error);
+        alert(`Failed to upload ${file.name}`);
+      }
+    }
   };
 
   const updatePhotoCaption = (index, caption) => {
@@ -268,11 +298,42 @@ const ValentineWishPage = () => {
       const chunks = [];
 
       recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        setWishData(prev => ({ ...prev, videoMessage: url }));
-        setVideoPreview(url);
+        const file = new File([blob], `video-${Date.now()}.webm`, { type: 'video/webm' });
+
+        try {
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileType: file.type
+            })
+          });
+
+          if (!response.ok) throw new Error('Upload init failed');
+          const { signedUrl, path } = await response.json();
+
+          const uploadResponse = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type },
+            body: file
+          });
+
+          if (!uploadResponse.ok) throw new Error('Storage upload failed');
+
+          const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/${path}`;
+          setWishData(prev => ({ ...prev, videoMessage: publicUrl }));
+          setVideoPreview(publicUrl);
+        } catch (error) {
+          console.error('Video upload error:', error);
+          alert('Failed to upload video');
+          // Fallback to local blob if upload fails
+          const url = URL.createObjectURL(blob);
+          setVideoPreview(url);
+        }
+
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -329,13 +390,13 @@ const ValentineWishPage = () => {
   const generateShareableLink = async () => {
     try {
       const id = Math.random().toString(36).substring(2, 15);
-      
+
       const response = await fetch('/api/wishes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, data: wishData })
       });
-      
+
       if (!response.ok) throw new Error('Failed to save');
       setShareableId(id);
       const url = `${window.location.origin}${window.location.pathname}?wish=${id}`;
@@ -382,7 +443,7 @@ const ValentineWishPage = () => {
       const words = wishData.message.split(' ');
       let line = '';
       let y = 600;
-      
+
       words.forEach(word => {
         const testLine = line + word + ' ';
         const metrics = ctx.measureText(testLine);
@@ -441,14 +502,37 @@ const ValentineWishPage = () => {
     return filters[filter] || 'none';
   };
 
-  const handleMusicUpload = (e) => {
+  const handleMusicUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setWishData(prev => ({ ...prev, customMusicUrl: event.target.result, musicChoice: 'custom' }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: `${Date.now()}-${file.name}`,
+            fileType: file.type
+          })
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+        const { signedUrl, path } = await response.json();
+
+        const uploadResponse = await fetch(signedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+
+        if (!uploadResponse.ok) throw new Error('Storage upload failed');
+
+        const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/${path}`;
+        setWishData(prev => ({ ...prev, customMusicUrl: publicUrl, musicChoice: 'custom' }));
+        alert('Music uploaded successfully!');
+      } catch (error) {
+        console.error('Music upload error:', error);
+        alert('Failed to upload music');
+      }
     }
   };
 
