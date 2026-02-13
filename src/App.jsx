@@ -58,24 +58,18 @@ const ValentineWishPage = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('wish');
-    const data = urlParams.get('data');
 
-    if (data) {
-      try {
-        const decoded = JSON.parse(atob(data));
-        setWishData(decoded);
-        setShareableId(id || 'shared');
-        setActiveTab('view');
-      } catch (e) {
-        console.error('Failed to load wish data');
-      }
-    } else if (id) {
-      const saved = localStorage.getItem(`valentine-wish-${id}`);
-      if (saved) {
-        setWishData(JSON.parse(saved));
-        setShareableId(id);
-        setActiveTab('view');
-      }
+    if (id) {
+      fetch(`http://localhost:3001/api/wishes/${id}`)
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            setWishData(result.data);
+            setShareableId(id);
+            setActiveTab('view');
+          }
+        })
+        .catch(e => console.error('Failed to load wish:', e));
     }
   }, []);
 
@@ -316,14 +310,23 @@ const ValentineWishPage = () => {
     }
   };
 
-  const generateShareableLink = () => {
-    const id = Math.random().toString(36).substring(2, 15);
-    localStorage.setItem(`valentine-wish-${id}`, JSON.stringify(wishData));
-    const encoded = btoa(JSON.stringify(wishData));
-    setShareableId(id);
-    const url = `${window.location.origin}${window.location.pathname}?wish=${id}&data=${encoded}`;
-    navigator.clipboard.writeText(url);
-    return url;
+  const generateShareableLink = async () => {
+    try {
+      const id = Math.random().toString(36).substring(2, 15);
+      const response = await fetch('http://localhost:3001/api/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, data: wishData })
+      });
+      if (!response.ok) throw new Error('Failed to save');
+      setShareableId(id);
+      const url = `${window.location.origin}${window.location.pathname}?wish=${id}`;
+      navigator.clipboard.writeText(url);
+      return url;
+    } catch (error) {
+      alert('Failed to generate link. Make sure server is running: npm run server');
+      console.error(error);
+    }
   };
 
   const downloadAsImage = async () => {
