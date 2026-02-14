@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.VITE_SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase credentials missing inside serverless function!');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
     // Add CORS headers

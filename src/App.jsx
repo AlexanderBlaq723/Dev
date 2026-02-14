@@ -397,13 +397,16 @@ const ValentineWishPage = () => {
         body: JSON.stringify({ id, data: wishData })
       });
 
-      if (!response.ok) throw new Error('Failed to save');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save');
+      }
       setShareableId(id);
       const url = `${window.location.origin}${window.location.pathname}?wish=${id}`;
       navigator.clipboard.writeText(url);
       return url;
     } catch (error) {
-      alert('Failed to generate link. Please check your internet connection.');
+      alert(`Error: ${error.message}`);
       console.error(error);
     }
   };
